@@ -1,0 +1,9 @@
+[global]
+campaign_url = http://www.rit.edu/studentaffairs/autismup/
+
+[bidder]
+name = Halam Ranbeer
+email = halam@ranbeer.com
+phone = 123-123-1234
+max = 200
+jerseys = 22:150, 27:150, 21:150, 7:150, 26:150
