@@ -267,7 +267,9 @@ def main():
 
     status = "UNKNOWN"
 
-    print "Your maximum bid is: "+ str(bidder.max_) + "\n"
+    print "Your maximum bid is: "+ str(bidder.max_) \
+            + "\nBids will refresh every " \
+            + str(args.timeinterval) + " seconds\n"
 
     while True:
         for jersey in bidder.bids:
