@@ -1,6 +1,7 @@
 import ConfigParser
 from botlib import get_args
 
+
 class Configuration:
     def __init__(self):
         # File
@@ -24,7 +25,7 @@ class Configuration:
         self.jerseys = self.cp.get("bidder", "jerseys")
         if self.args.jerseys:
             self.jerseys = self.args.jerseys
-        self.bid_interval= self.cp.getint("bidder", "bid_interval")
+        self.bid_interval = self.cp.getint("bidder", "bid_interval")
         if self.args.bid_interval:
             self.bid_interval = self.args.bid_interval
         self.time_interval = self.cp.getint("bidder", "time_interval")

@@ -12,7 +12,11 @@ import jersey
 from config import config
 from botlib import *
 
+
 def main():
+    """
+    Print out information and update bid status
+    """
     # Header
     print_header()
     print_config(config)
@@ -30,6 +34,7 @@ def main():
         my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
         show_bid_report(my_bids)
         my_bids = win_bid_from_pool(my_bids, config)
+        print ""
         sleep(config.time_interval)
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import re
 from jersey import Jersey
 from bid import Bid
 
+
 def get_args():
     """
     Parse and establish the arguments we take in on the CLI
@@ -15,16 +16,16 @@ def get_args():
     parser = argparse.ArgumentParser(description="Win a hockey jersey \
             from RIT!", epilog="Written by Grant Cohoe \
             (http://grantcohoe.com)")
-    parser.add_argument("-n", "--name", dest="name", 
+    parser.add_argument("-n", "--name", dest="name",
                         help="Specify the name to bid as (ex: 'Grant Cohoe')")
-    parser.add_argument("-e", "--email", dest="email", 
+    parser.add_argument("-e", "--email", dest="email",
                         help="Specify the email they should contact you at \
                         (ex: 'me@grntm.co')")
     parser.add_argument("-p", "--phone", dest="phone", help="Specify a phone \
                         number to contact you (ex: '330-790-1701')")
     parser.add_argument("-j", "--jersey", dest="jerseys", help="The jersey \
                         number you want to bid on", action='append')
-    parser.add_argument("-m", "--max", dest="maxbid", 
+    parser.add_argument("-m", "--max", dest="maxbid",
                         help="The maximum amount you want to bid", type=float)
     parser.add_argument("--mybid", dest="mybid", type=float, help=
                         "Your current bid for use if restarting this program")
@@ -42,6 +43,7 @@ def get_args():
 
     return parser.parse_args()
 
+
 def show_auction_status(campaign_url):
     """
     Print out a summary report of the current bids on jerseys
@@ -53,6 +55,7 @@ def show_auction_status(campaign_url):
     jerseys = get_auctioned_jerseys(soup)
     for j in jerseys:
         print j
+
 
 def get_auctioned_jerseys(soup):
     """
@@ -140,6 +143,7 @@ def closeout(signal, frame):
     print "\nSee ya! You suck!"
     exit()
 
+
 def get_bids(bid_string):
     """
     Get a list of bid objects from the config string
@@ -155,6 +159,7 @@ def get_bids(bid_string):
 
     return bid_objects
 
+
 def refresh_bids(campaign_url, bids, max_bid):
     """
     Refresh the current amount of a list of bid objects
@@ -167,16 +172,15 @@ def refresh_bids(campaign_url, bids, max_bid):
 
     return updated_bids
 
+
 def show_bid_report(bids):
     """
     Print a report of the status of your bids
     """
     for bid in bids:
-        print get_timestamp()+"\t Jersey: "+str(bid.jersey)+"\t Current Bid: " \
-        + str(bid.current_amount)+" ("+str(bid.my_amount)+")\tStatus: "+bid.status
-
-    # Blank line
-    print ""
+        print get_timestamp()+"\t Jersey: "+str(bid.jersey)+"\t Current Bid: "\
+            + str(bid.current_amount)+" ("+str(bid.my_amount)+")\tStatus: " \
+            + bid.status
 
 
 def get_bid_from_my_bids(bids, number):
@@ -186,6 +190,7 @@ def get_bid_from_my_bids(bids, number):
     for bid in bids:
         if bid.jersey == number:
             return bid
+
 
 def win_bid_from_pool(my_bids, config):
     """
@@ -217,10 +222,16 @@ def win_bid_from_pool(my_bids, config):
 
     return my_bids
 
+
 def print_config(config):
+    """
+    Print a string summarizing your bid status
+    """
     print "Your maximum bid is: "+str(config.max_bid)
-    print "You will check your bids every "+str(config.time_interval)+" seconds and re-bid at $"+str(config.bid_interval)+" intervals"
+    print "You will check your bids every "+str(config.time_interval) + \
+        " seconds and re-bid at $"+str(config.bid_interval)+" intervals"
     print ""
+
 
 def get_bids_by_status(bids, state):
     """
@@ -233,19 +244,28 @@ def get_bids_by_status(bids, state):
 
     return ret_bids
 
+
 def get_lowest_bid(my_bids):
+    """
+    From a list of bids, get the lowest valued one
+    """
     val = min(bid.current_amount for bid in my_bids)
     for bid in my_bids:
         if bid.current_amount == val:
             return bid
 
+
 def make_bid(bid, config):
+    """
+    Make a bid on a jersey
+    """
     bid_amount = bid.current_amount + config.bid_interval
     if bid_amount > config.max_bid:
         print "[WARNING]: Updated bid is outside of your maximum"
         return bid
 
-    print "[INFO]: Updating bid on jersey #"+str(bid.jersey)+" from "+str(bid.current_amount)+" to "+str(bid_amount)
+    print "[INFO]: Updating bid on jersey #"+str(bid.jersey)+" from " + \
+        str(bid.current_amount)+" to "+str(bid_amount)
 
     try:
         post_bid(bid.jersey, bid_amount, config)
@@ -256,22 +276,31 @@ def make_bid(bid, config):
 
     return bid
 
+
 def update_bid_file(bid, config):
+    """
+    Update the config file with new bidding information
+    """
     new_amount = bid.current_amount
     jersey = bid.jersey
     print "[DEBUG]: Updating file with "+str(jersey)+":"+str(new_amount)
 
     with open('config.cfg', 'r+') as fh:
         contents = fh.read()
-        contents = re.sub(str(bid.jersey)+":[\d\.]+", str(bid.jersey)+":"+str(bid.current_amount), contents)
+        contents = re.sub(str(bid.jersey)+":[\d\.]+", str(bid.jersey)+":" +
+                          str(bid.current_amount), contents)
         fh.seek(0)
         fh.write(contents)
         fh.truncate()
 
+
 def post_bid(jersey, bid_amount, config):
+    """
+    Send off a bid on a specific jersey
+    """
     if config.simulate is False:
         payload = {'bidamt': bid_amount, 'player': jersey,
-                   'name': config.name, 'email': config.email, 
+                   'name': config.name, 'email': config.email,
                    'phone': config.phone}
 
         submit_url = config.campaign_url + "scripts/jersey_submit.php"
@@ -280,4 +309,3 @@ def post_bid(jersey, bid_amount, config):
         if r.text.endswith("error"):
             print "[ERROR]: " + r.text
             raise Exception("Critical POST error")
-
