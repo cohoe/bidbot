@@ -31,8 +31,10 @@ class Configuration:
         self.time_interval = self.cp.getint("bidder", "time_interval")
         if self.args.time_interval:
             self.time_interval = self.args.time_interval
+        self.favorite = self.cp.getint("bidder", "favorite")
+        if self.args.favorite:
+            self.favorite = self.args.favorite
 
-        self.pool = self.args.pool
         self.simulate = self.args.simulate
         self.status = self.args.status
 

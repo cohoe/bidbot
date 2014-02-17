@@ -38,8 +38,8 @@ def get_args():
                         of bids and exit", action='store_true')
     parser.add_argument("--simulate", dest="simulate", default=False,
                         action='store_true', help="Simulate bidding only")
-    parser.add_argument("--pool", dest="pool", default=False,
-                        action='store_true', help="Get one of your jerseys")
+    parser.add_argument("-f", "--favorite", dest="favorite", type=int,
+                        help="Choose a jersey to go to the max for")
 
     return parser.parse_args()
 
@@ -190,6 +190,7 @@ def get_bid_from_my_bids(bids, number):
     for bid in bids:
         if bid.jersey == number:
             return bid
+    raise Exception("Unable to find a bid for "+str(number))
 
 
 def win_bid_from_pool(my_bids, config):
@@ -198,19 +199,37 @@ def win_bid_from_pool(my_bids, config):
     """
     bid_states = {}
 
+    # Get a list of the status's of your bids
     for bid in my_bids:
         bid_states[bid.status] = None
 
+    # All of your jerseys are maxed out.
     if len(bid_states.keys()) is 1 and "MAXED OUT" in bid_states.keys():
         print "All bids are maxed out. Either increase your max bid or leave"
         return my_bids
 
+    # You aren't winning anything. We should fix that.
     if "WINNING" not in bid_states.keys():
         print "[INFO]: You're not winning anything!"
         losing_bids = get_bids_by_status(my_bids, "LOSING")
-        lowest_bid = get_lowest_bid(losing_bids)
-        new_bid = make_bid(lowest_bid, config)
+        # If you have a favorite, we will default to that until it is maxed out
+        if config.favorite:
+            try:
+                active_bid = get_bid_from_my_bids(losing_bids, config.favorite)
+            except Exception:
+                # Your favorite jersey is maxed out
+                print "[WARNING]: Favorite jersey ("+str(config.favorite) + \
+                      ") is maxed out. Picking lowest remaining."
+                active_bid = get_lowest_bid(losing_bids)
+        else:
+            # You have no favorite
+            active_bid = get_lowest_bid(losing_bids)
 
+        # Update bid object after making a new bid
+        print "[DEBUG]: Setting active bid to #"+str(active_bid.jersey)
+        new_bid = make_bid(active_bid, config)
+
+        # Add it back into the list of your active bids
         new_bids = []
         for bid in my_bids:
             if bid.jersey == new_bid.jersey:
@@ -218,6 +237,7 @@ def win_bid_from_pool(my_bids, config):
             else:
                 new_bids.append(bid)
     else:
+        # You are winning at least one! yay!
         print "[INFO]: You're winning at least one jersey"
 
     return my_bids
@@ -265,8 +285,12 @@ def make_bid(bid, config):
         return bid
 
     print "[INFO]: Updating bid on jersey #"+str(bid.jersey)+" from " + \
-        str(bid.current_amount)+" to "+str(bid_amount)
+        str(bid.current_amount)+" to "+str(bid_amount) + \
+        " (your last bid was "+str(bid.my_amount)+")"
 
+    if config.simulate is True:
+        print "[WARNING] Simulate mode is on. Not actually bidding on anything"
+        return bid
     try:
         post_bid(bid.jersey, bid_amount, config)
         bid.update_my_amount(bid_amount, config.max_bid)

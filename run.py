@@ -30,6 +30,14 @@ def main():
     #print get_jersey_current_bid(config.campaign_url, 4)
     my_bids = get_bids(config.jerseys)
 
+    if config.favorite:
+        bid = get_bid_from_my_bids(my_bids, config.favorite)
+        if bid is None:
+            print "[ERROR]: Your favorite is not in your list of bids!"
+            exit(1)
+
+    print "[DEBUG]: Favorite is "+str(config.favorite)
+
     while True:
         my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
         show_bid_report(my_bids)
