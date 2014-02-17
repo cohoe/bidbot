@@ -4,11 +4,11 @@ from botlib import get_args
 
 class Configuration:
     def __init__(self):
-        # File
-        self.cp = ConfigParser.RawConfigParser()
-        self.cp.read('config.cfg')
         # Args
         self.args = get_args()
+        # File
+        self.cp = ConfigParser.RawConfigParser()
+        self.cp.read(self.args.config)
 
         self.name = self.cp.get("bidder", "name")
         if self.args.name:
@@ -29,7 +29,7 @@ class Configuration:
         if self.args.bid_interval:
             self.bid_interval = self.args.bid_interval
         self.time_interval = self.cp.getint("bidder", "time_interval")
-        if self.args.time_interval:
+        if self.args.time_interval is not None:
             self.time_interval = self.args.time_interval
         self.favorite = self.cp.getint("bidder", "favorite")
         if self.args.favorite:

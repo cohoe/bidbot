@@ -40,6 +40,8 @@ def get_args():
                         action='store_true', help="Simulate bidding only")
     parser.add_argument("-f", "--favorite", dest="favorite", type=int,
                         help="Choose a jersey to go to the max for")
+    parser.add_argument("-c", "--config", dest="config", default='config.cfg',
+                        help="Specify a config file")
 
     return parser.parse_args()
 
@@ -247,6 +249,7 @@ def print_config(config):
     """
     Print a string summarizing your bid status
     """
+    print "You are: "+config.name+" ("+config.email+")"
     print "Your maximum bid is: "+str(config.max_bid)
     print "You will check your bids every "+str(config.time_interval) + \
         " seconds and re-bid at $"+str(config.bid_interval)+" intervals"

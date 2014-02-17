@@ -38,6 +38,10 @@ def main():
 
     print "[DEBUG]: Favorite is "+str(config.favorite)
 
+    my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
+    show_bid_report(my_bids)
+    print ""
+    cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
     while True:
         my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
         show_bid_report(my_bids)
