@@ -1,4 +1,4 @@
-*.cfg
+config.cfg
 target
 .*.swp
 *.pyc
