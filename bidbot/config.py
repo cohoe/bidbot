@@ -1,5 +1,6 @@
 import ConfigParser
 from botlib import get_args
+import os.path
 
 
 class Configuration:
@@ -8,7 +9,11 @@ class Configuration:
         self.args = get_args()
         # File
         self.cp = ConfigParser.RawConfigParser()
-        self.cp.read(self.args.config)
+        if os.path.isfile(self.args.config):
+            self.cp.read(self.args.config)
+        else:
+            print "[ERROR]: Config file not found!"
+            exit(1)
 
         self.name = self.cp.get("bidder", "name")
         if self.args.name:

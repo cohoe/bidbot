@@ -8,9 +8,9 @@ import signal
 import re
 from time import sleep
 
-import jersey
-from config import config
-from botlib import *
+from bidbot import jersey
+from bidbot.config import config
+from bidbot.botlib import *
 
 
 def main():
