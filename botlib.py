@@ -81,8 +81,6 @@ def get_auctioned_jerseys(soup):
 
         # Bid Info
         bid_container = jersey.find("div", class_='jbid')
-        bid_action_call = bid_container.find("div", class_=
-                                             'jbbutton')['onclick']
         # There's a trailing ; here. not sure if it's
         # going to screw things up later
         bid_current_amount = bid_container.find("span",
