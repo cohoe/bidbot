@@ -1,4 +1,8 @@
 class Bid:
+    """
+    This is a representation of a bid that you are making for
+    a jersey
+    """
     def __init__(self, jersey, current_amount, my_amount):
         self.jersey = jersey
         self.current_amount = current_amount
@@ -12,6 +16,10 @@ class Bid:
             ",status="+self.status+")}>"
 
     def update_current_amount(self, new_val, max_bid=0):
+        """
+        Update the current amount with a new value. Recalculate
+        the status to ensure you're winning, losing, maxed, etc
+        """
         self.current_amount = new_val
 
         if self.current_amount >= max_bid:
@@ -24,5 +32,9 @@ class Bid:
             self.status = "ERROR"
 
     def update_my_amount(self, new_val, max_bid=0):
+        """
+        Update the bid with your new amount. Calls to
+        update_current_amount() to recalcuate your status
+        """
         self.my_amount = new_val
         self.update_current_amount(new_val, max_bid)

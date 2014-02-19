@@ -113,7 +113,7 @@ will though. May the odds be ever in your favor!
 
 def get_timestamp():
     """
-    Return the current time
+    Return the current time in a sane format
     """
     return re.sub('\d{5}$', '', str(datetime.now()))
 
@@ -280,6 +280,7 @@ def make_bid(bid, config):
     """
     Make a bid on a jersey
     """
+    # Calculate your next bid amount
     bid_amount = bid.current_amount + config.bid_interval
     if bid_amount > config.max_bid:
         print "[WARNING]: Updated bid is outside of your maximum"
@@ -289,14 +290,17 @@ def make_bid(bid, config):
         str(bid.current_amount)+" to "+str(bid_amount) + \
         " (your last bid was "+str(bid.my_amount)+")"
 
+    # This is fake. Don't actually do anything
     if config.simulate is True:
         print "[WARNING] Simulate mode is on. Not actually bidding on anything"
         return bid
     try:
+        # POST the bid, update the object, update the config file
         post_bid(bid.jersey, bid_amount, config)
         bid.update_my_amount(bid_amount, config.max_bid)
         update_bid_file(bid, config)
     except Exception:
+        # Something didn't update. We'll catch it on the next run
         pass
 
     return bid
@@ -328,8 +332,10 @@ def post_bid(jersey, bid_amount, config):
                    'name': config.name, 'email': config.email,
                    'phone': config.phone}
 
+        # The URL to POST to
         submit_url = config.campaign_url + "scripts/jersey_submit.php"
 
+        # Make the request
         r = requests.post(submit_url, data=payload)
         if r.text.endswith("error"):
             print "[ERROR]: " + r.text

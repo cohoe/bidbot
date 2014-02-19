@@ -4,6 +4,11 @@ import os.path
 
 
 class Configuration:
+    """
+    An object representing the configuration state of the program.
+    Takes into account both config file and arguments. Args always
+    superceed the file
+    """
     def __init__(self):
         # Args
         self.args = get_args()
@@ -15,6 +20,7 @@ class Configuration:
             print "[ERROR]: Config file not found!"
             exit(1)
 
+        # There is probably a better way to do this...
         self.name = self.cp.get("bidder", "name")
         if self.args.name:
             self.name = self.args.name
@@ -45,4 +51,5 @@ class Configuration:
 
         self.campaign_url = self.cp.get("global", "campaign_url")
 
+# Instantiate the Configuration class
 config = Configuration()

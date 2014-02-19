@@ -47,7 +47,8 @@ def main():
     # Continuously show status and update bids based on your configuration
     while True:
         try:
-            my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
+            my_bids = refresh_bids(config.campaign_url, my_bids,
+                                   config.max_bid)
             show_bid_report(my_bids)
             my_bids = win_bid_from_pool(my_bids, config)
         except:
