@@ -22,3 +22,8 @@ This means that you want jerseys 27 and 28. You have bids of 150 and 160 respect
 
 # Usage
 ```python run.py -h``` will get you help on the available options.
+
+# Future Plans
+1. Add support for multiple favorites (in order of preference)
+1. ncurses-like screen printing for more sane viewing
+1. Live status view highlighting recent increases
