@@ -104,15 +104,13 @@ def print_header():
     Print out an informational header
     """
     print '''
+---------------------------------------------------------------------
 RIT Jersey BidBot by Grant Cohoe (RIT '13)
 
-WARNING: Use of this program is subject to your own ethics.
-Please don't be a dick about it. Keep the bid interval somewhat
-sane (anything less than 2 seconds is totally suspicious). These
-jerseys usually go to a good cause, so bid high (interval >= 5).
-
-DISCLAIMER: I make no guarantees that you'll actually win. You probably
-will though. May the odds be ever in your favor!
+DISCLAIMER: Don't be a dick with this. Wait until the last few 
+minutes to use it. I make no guarantees that you'll actually win. You
+probably will though. May the odds be ever in your favor!
+---------------------------------------------------------------------
 '''
 
 
