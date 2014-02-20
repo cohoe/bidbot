@@ -1,6 +1,7 @@
 import ConfigParser
 from botlib import get_args
 import os.path
+import logging
 
 
 class Configuration:
@@ -10,46 +11,55 @@ class Configuration:
     superceed the file
     """
     def __init__(self):
+
         # Args
         self.args = get_args()
         # File
         self.cp = ConfigParser.RawConfigParser()
+
         if os.path.isfile(self.args.config):
             self.cp.read(self.args.config)
         else:
-            print "[ERROR]: Config file not found!"
+            logging.error("Config file not found!")
             exit(1)
 
-        # There is probably a better way to do this...
-        self.name = self.cp.get("bidder", "name")
-        if self.args.name:
-            self.name = self.args.name
-        self.email = self.cp.get("bidder", "email")
-        if self.args.email:
-            self.email = self.args.email
-        self.phone = self.cp.get("bidder", "phone")
-        if self.args.phone:
-            self.phone = self.args.phone
-        self.max_bid = self.cp.getfloat("bidder", "max")
-        if self.args.maxbid:
-            self.max_bid = self.args.maxbid
-        self.jerseys = self.cp.get("bidder", "jerseys")
-        if self.args.jerseys:
-            self.jerseys = self.args.jerseys
-        self.bid_interval = self.cp.getint("bidder", "bid_interval")
-        if self.args.bid_interval:
-            self.bid_interval = self.args.bid_interval
-        self.time_interval = self.cp.getint("bidder", "time_interval")
-        if self.args.time_interval is not None:
-            self.time_interval = self.args.time_interval
-        self.favorite = self.cp.getint("bidder", "favorite")
-        if self.args.favorite:
-            self.favorite = self.args.favorite
-
-        self.simulate = self.args.simulate
-        self.status = self.args.status
-
         self.campaign_url = self.cp.get("global", "campaign_url")
+
+        # Debug Logging
+        if self.args.debug:
+            logging.basicConfig(format='[%(levelname)s]: %(message)s',
+                                level=logging.DEBUG)
+
+            logging.debug("DEBUG IS ACTIVE")
+        else:
+            logging.basicConfig(format='[%(levelname)s]: %(message)s')
+
+        req_config_items = ["name", "email", "phone", "max_bid", "jerseys",
+                            "bid_interval", "time_interval"]
+        opt_config_items = ["favorite", "simulate", "status"]
+        bidder_head = "bidder"
+
+        file_items = [line[0] for line in self.cp.items(bidder_head)]
+
+        for key in req_config_items + opt_config_items:
+            if getattr(self.args, key) is not None:
+                setattr(self, key, getattr(self.args, key))
+                logging.debug("Key '"+key+"' ATTR")
+            elif key in file_items:
+                setattr(self, key, self.cp.get(bidder_head, key))
+                logging.debug("Key '"+key+"' CONF")
+            elif key in opt_config_items:
+                setattr(self, key, None)
+                logging.debug("Key '"+key+"' OPT")
+            else:
+                logging.error("Configuration key '"+key+"' not specified")
+                exit(1)
+
+        config_numbers = ["bid_interval", "time_interval", "max_bid"]
+        for key in config_numbers:
+            value = getattr(self, key)
+            setattr(self, key, float(value))
+
 
 # Instantiate the Configuration class
 config = Configuration()

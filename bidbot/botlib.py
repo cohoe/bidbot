@@ -7,6 +7,7 @@ import re
 
 from jersey import Jersey
 from bid import Bid
+import logging
 
 
 def get_args():
@@ -16,6 +17,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="Win a hockey jersey \
             from RIT!", epilog="Written by Grant Cohoe \
             (http://grantcohoe.com)")
+    # Person details
     parser.add_argument("-n", "--name", dest="name",
                         help="Specify the name to bid as (ex: 'Grant Cohoe')")
     parser.add_argument("-e", "--email", dest="email",
@@ -23,25 +25,28 @@ def get_args():
                         (ex: 'me@grntm.co')")
     parser.add_argument("-p", "--phone", dest="phone", help="Specify a phone \
                         number to contact you (ex: '330-790-1701')")
-    parser.add_argument("-j", "--jersey", dest="jerseys", help="The jersey \
-                        number you want to bid on", action='append')
-    parser.add_argument("-m", "--max", dest="maxbid",
-                        help="The maximum amount you want to bid", type=float)
-    parser.add_argument("--mybid", dest="mybid", type=float, help=
-                        "Your current bid for use if restarting this program")
+    # Preferences
     parser.add_argument("-t", "--time", dest="time_interval", type=int,
                         help="Bid checking interval in seconds \
                         (ex: 1)")
     parser.add_argument("-b", "--bid", dest="bid_interval", type=int,
                         help="Amount to increase each bid by")
-    parser.add_argument("--status", dest="status", help="Print status \
-                        of bids and exit", action='store_true')
-    parser.add_argument("--simulate", dest="simulate", default=False,
-                        action='store_true', help="Simulate bidding only")
+    parser.add_argument("-m", "--max", dest="max_bid",
+                        help="The maximum amount you want to bid", type=float)
+    # Jerseys
+    parser.add_argument("-j", "--jersey", dest="jerseys", help="The jersey \
+                        number you want to bid on", action='append')
     parser.add_argument("-f", "--favorite", dest="favorite", type=int,
                         help="Choose a jersey to go to the max for")
+    # Programmatic Things
+    parser.add_argument("--status", dest="status", help="Print status \
+                        of bids and exit", action='store_true')
     parser.add_argument("-c", "--config", dest="config", default='config.cfg',
                         help="Specify a config file")
+    parser.add_argument("--simulate", dest="simulate", default=False,
+                        action='store_true', help="Simulate bidding only")
+    parser.add_argument("-d", "--debug", dest="debug", action='store_true',
+                        help="Enable debug log messages")
 
     return parser.parse_args()
 
@@ -140,7 +145,7 @@ def closeout(signal, frame):
     """
     Exit the program
     """
-    print "\nSee ya! You suck!"
+    logging.info("See ya! You suck!")
     exit()
 
 
@@ -148,9 +153,18 @@ def get_bids(bid_string):
     """
     Get a list of bid objects from the config string
     """
-    bids = bid_string.split(", ")
+    bids = bid_string
+
+    # If specified from the CLI args, then it comes in as a list
+    # already and we don't need to split it up. Otherwise, we do
+    if not isinstance(bid_string, list):
+        bids = bid_string.split(", ")
+
     bid_objects = []
     for bid in bids:
+        # The user is supposed to put a :0 for no bid, but they probably didnt
+        if ":" not in bid:
+            bid = bid+":0"
         number, my_bid = bid.split(":")
         number = int(number)
         my_bid = float(my_bid)
@@ -210,7 +224,7 @@ def win_bid_from_pool(my_bids, config):
 
     # You aren't winning anything. We should fix that.
     if "WINNING" not in bid_states.keys():
-        print "[INFO]: You're not winning anything!"
+        logging.info("You're not winning anything!")
         losing_bids = get_bids_by_status(my_bids, "LOSING")
         # If you have a favorite, we will default to that until it is maxed out
         if config.favorite:
@@ -218,15 +232,15 @@ def win_bid_from_pool(my_bids, config):
                 active_bid = get_bid_from_my_bids(losing_bids, config.favorite)
             except Exception:
                 # Your favorite jersey is maxed out
-                print "[WARNING]: Favorite jersey ("+str(config.favorite) + \
-                      ") is maxed out. Picking lowest remaining."
+                logging.warning("Favorite jersey ("+str(config.favorite) +
+                                ") is maxed out. Picking lowest remaining.")
                 active_bid = get_lowest_bid(losing_bids)
         else:
             # You have no favorite
             active_bid = get_lowest_bid(losing_bids)
 
         # Update bid object after making a new bid
-        print "[DEBUG]: Setting active bid to #"+str(active_bid.jersey)
+        logging.debug("Setting active bid to #"+str(active_bid.jersey))
         new_bid = make_bid(active_bid, config)
 
         # Add it back into the list of your active bids
@@ -238,7 +252,7 @@ def win_bid_from_pool(my_bids, config):
                 new_bids.append(bid)
     else:
         # You are winning at least one! yay!
-        print "[INFO]: You're winning at least one jersey"
+        logging.info("You're winning at least one jersey")
 
     return my_bids
 
@@ -283,16 +297,16 @@ def make_bid(bid, config):
     # Calculate your next bid amount
     bid_amount = bid.current_amount + config.bid_interval
     if bid_amount > config.max_bid:
-        print "[WARNING]: Updated bid is outside of your maximum"
+        logging.warning("Updated bid is outside of your maximum")
         return bid
 
-    print "[INFO]: Updating bid on jersey #"+str(bid.jersey)+" from " + \
-        str(bid.current_amount)+" to "+str(bid_amount) + \
-        " (your last bid was "+str(bid.my_amount)+")"
+    logging.info("Updating bid on jersey #"+str(bid.jersey)+" from " +
+                 str(bid.current_amount)+" to "+str(bid_amount) +
+                 " (your last bid was "+str(bid.my_amount)+")")
 
     # This is fake. Don't actually do anything
     if config.simulate is True:
-        print "[WARNING] Simulate mode is on. Not actually bidding on anything"
+        logging.warning("Simulate mode is on. Not actually bidding.")
         return bid
     try:
         # POST the bid, update the object, update the config file
@@ -312,7 +326,7 @@ def update_bid_file(bid, config):
     """
     new_amount = bid.current_amount
     jersey = bid.jersey
-    print "[DEBUG]: Updating file with "+str(jersey)+":"+str(new_amount)
+    logging.debug("Updating file with "+str(jersey)+":"+str(new_amount))
 
     with open('config.cfg', 'r+') as fh:
         contents = fh.read()
@@ -338,8 +352,8 @@ def post_bid(jersey, bid_amount, config):
         # Make the request
         r = requests.post(submit_url, data=payload)
         if r.text.endswith("error"):
-            print "[ERROR]: " + r.text
+            logging.error(r.text)
             raise Exception("Critical POST error")
         elif r.text.endswith("over"):
-            print "[ERROR]: The auction is over. I'm sorry. We somehow lost."
+            logging.error("The auction is over. I'm sorry. We somehow lost.")
             raise Exception("Critical POST error")

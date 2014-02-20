@@ -10,6 +10,7 @@ from time import sleep
 
 from bidbot import jersey
 from bidbot.config import config
+from bidbot.config import logging
 from bidbot.botlib import *
 
 
@@ -30,13 +31,13 @@ def main():
     my_bids = get_bids(config.jerseys)
 
     # Make sure your favorite is actually something you're bidding on
-    if config.favorite:
+    if config.favorite is not None:
         bid = get_bid_from_my_bids(my_bids, config.favorite)
         if bid is None:
-            print "[ERROR]: Your favorite is not in your list of bids!"
+            logging.error("Your favorite is not in your list of bids!")
             exit(1)
 
-    print "[DEBUG]: Favorite is "+str(config.favorite)
+    logging.debug("Favorite is "+str(config.favorite))
 
     # Print an initial status report of your bids
     my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
@@ -52,7 +53,7 @@ def main():
             show_bid_report(my_bids)
             my_bids = win_bid_from_pool(my_bids, config)
         except:
-            print "[ERROR]: Something bad happened this run. Trying again..."
+            logging.error("Something bad happened this run. Trying again...")
 
         print ""
         sleep(config.time_interval)
