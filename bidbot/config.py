@@ -52,7 +52,8 @@ class Configuration:
                 setattr(self, key, None)
                 logging.debug("Key '"+key+"' OPT")
             else:
-                logging.error("Configuration key '"+key+"' not specified")
+                logging.error("Configuration key '"+key+"' not specified" +
+                              " in the config file or CLI arguments")
                 exit(1)
 
         config_numbers = ["bid_interval", "time_interval", "max_bid"]

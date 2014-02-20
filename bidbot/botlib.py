@@ -145,7 +145,7 @@ def closeout(signal, frame):
     """
     Exit the program
     """
-    logging.info("See ya! You suck!")
+    print "\nSee ya! You suck!"
     exit()
 
 
