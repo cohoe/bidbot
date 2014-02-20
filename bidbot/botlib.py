@@ -340,3 +340,6 @@ def post_bid(jersey, bid_amount, config):
         if r.text.endswith("error"):
             print "[ERROR]: " + r.text
             raise Exception("Critical POST error")
+        elif r.text.endswith("over"):
+            print "[ERROR]: The auction is over. I'm sorry. We somehow lost."
+            raise Exception("Critical POST error")
