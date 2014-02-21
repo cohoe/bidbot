@@ -4,8 +4,10 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import requests
 import re
+import curses
 
 from jersey import Jersey
+from terminal import Terminal
 from bid import Bid
 import logging
 
@@ -99,11 +101,11 @@ def get_auctioned_jerseys(soup):
     return jerseys
 
 
-def print_header():
+def get_header():
     """
     Print out an informational header
     """
-    print '''
+    return '''
 ---------------------------------------------------------------------
 RIT Jersey BidBot by Grant Cohoe (RIT '13)
 
@@ -111,6 +113,7 @@ DISCLAIMER: Don't be a dick with this. Wait until the last few
 minutes to use it. I make no guarantees that you'll actually win. You
 probably will though. May the odds be ever in your favor!
 ---------------------------------------------------------------------
+
 '''
 
 
@@ -143,6 +146,10 @@ def closeout(signal, frame):
     """
     Exit the program
     """
+    try:
+        curses.endwin()
+    except curses.error:
+        pass
     print "\nSee ya! You suck!"
     exit()
 
@@ -255,15 +262,18 @@ def win_bid_from_pool(my_bids, config):
     return my_bids
 
 
-def print_config(config):
+def get_config(config):
     """
     Print a string summarizing your bid status
     """
-    print "You are: "+config.name+" ("+config.email+")"
-    print "Your maximum bid is: "+str(config.max_bid)
-    print "You will check your bids every "+str(config.time_interval) + \
-        " seconds and re-bid at $"+str(config.bid_interval)+" intervals"
-    print ""
+    ret = ""
+    ret += "You are: "+config.name+" ("+config.email+")\n"
+    ret += "Your maximum bid is: "+str(config.max_bid)+"\n"
+    ret += "You will check your bids every "+str(config.time_interval) + \
+        " seconds and re-bid at $"+str(config.bid_interval)+" intervals\n"
+    ret += "\n"
+
+    return ret
 
 
 def get_bids_by_status(bids, state):
@@ -355,3 +365,15 @@ def post_bid(jersey, bid_amount, config):
         elif r.text.endswith("over"):
             logging.error("The auction is over. I'm sorry. We somehow lost.")
             raise Exception("Critical POST error")
+
+
+def curses_setup():
+
+    screen = curses.initscr()
+    curses.start_color()
+    curses.use_default_colors()
+    curses.noecho()
+    curses.curs_set(0)
+    screen.keypad(1)
+
+    return Terminal(screen)

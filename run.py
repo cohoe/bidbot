@@ -18,14 +18,18 @@ def main():
     """
     Print out information and update bid status
     """
-    # Header
-    print_header()
-    print_config(config)
 
     # Print a status report
     if config.status is True:
         show_auction_status(config.campaign_url)
         return
+
+    # Curses
+    term = curses_setup()
+
+    # Header
+    term.show(get_header())
+    term.show(get_config(config))
 
     # Make a list of bid objects based on the jerseys you want
     my_bids = get_bids(config.jerseys)
@@ -43,7 +47,7 @@ def main():
     my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
     show_bid_report(my_bids)
     print ""
-    cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
+    #cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
 
     # Continuously show status and update bids based on your configuration
     while True:
@@ -61,3 +65,4 @@ def main():
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, closeout)
     main()
+    closeout(None, None)
