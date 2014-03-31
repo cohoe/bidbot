@@ -25,6 +25,7 @@ This means that you want jerseys 27 and 28. You have bids of 150 and 160 respect
 
 # Future Plans
 1. Add support for multiple favorites (in order of preference)
+1. Multiple campaigns with settings for each
 1. ncurses-like screen printing for more sane viewing
 1. Live status view highlighting recent increases
 1. Historical graphs
