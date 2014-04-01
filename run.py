@@ -24,36 +24,32 @@ def main():
 
     # Print a status report
     if config.status is True:
-        show_auction_status(config.campaign_url)
+        show_auction_status(config)
         return
 
     # Make a list of bid objects based on the jerseys you want
-    my_bids = get_bids(config.jerseys)
+    for c in config.campaigns:
+        my_bids = get_bids_from_string(c.jerseys, c.name)
+        c.update_bids(my_bids)
 
-    # Make sure your favorite is actually something you're bidding on
-    if config.favorite is not None:
-        bid = get_bid_from_my_bids(my_bids, config.favorite)
-        if bid is None:
-            logging.error("Your favorite is not in your list of bids!")
-            exit(1)
+    # Print favorites
+    print_favorites(config)
 
-    logging.debug("Favorite is "+str(config.favorite))
 
-    # Print an initial status report of your bids
-    my_bids = refresh_bids(config.campaign_url, my_bids, config.max_bid)
-    show_bid_report(my_bids)
+    refresh_bids(config)
+    show_bid_report(config)
     print ""
-    cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
+    #cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
 
     # Continuously show status and update bids based on your configuration
     while True:
-        try:
-            my_bids = refresh_bids(config.campaign_url, my_bids,
-                                   config.max_bid)
-            show_bid_report(my_bids)
-            my_bids = win_bid_from_pool(my_bids, config)
-        except:
-            logging.error("Something bad happened this run. Trying again...")
+    #    try:
+        refresh_bids(config)
+        show_bid_report(config)
+        win_bid_from_pool(config)
+     #   except Exception as e:
+            #logging.error("Something bad happened this run. Trying again...")
+            #logging.error(e)
 
         print ""
         sleep(config.time_interval)

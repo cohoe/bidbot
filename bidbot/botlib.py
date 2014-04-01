@@ -17,51 +17,36 @@ def get_args():
     parser = argparse.ArgumentParser(description="Win a hockey jersey \
             from RIT!", epilog="Written by Grant Cohoe \
             (http://grantcohoe.com)")
-    # Person details
-    parser.add_argument("-n", "--name", dest="name",
-                        help="Specify the name to bid as (ex: 'Grant Cohoe')")
-    parser.add_argument("-e", "--email", dest="email",
-                        help="Specify the email they should contact you at \
-                        (ex: 'me@grntm.co')")
-    parser.add_argument("-p", "--phone", dest="phone", help="Specify a phone \
-                        number to contact you (ex: '330-790-1701')")
-    # Preferences
-    parser.add_argument("-t", "--time", dest="time_interval", type=int,
-                        help="Bid checking interval in seconds \
-                        (ex: 1)")
-    parser.add_argument("-b", "--bid", dest="bid_interval", type=int,
-                        help="Amount to increase each bid by")
-    parser.add_argument("-m", "--max", dest="max_bid",
-                        help="The maximum amount you want to bid", type=float)
-    # Jerseys
-    parser.add_argument("-j", "--jersey", dest="jerseys", help="The jersey \
-                        number you want to bid on", action='append')
-    parser.add_argument("-f", "--favorite", dest="favorite", type=int,
-                        help="Choose a jersey to go to the max for")
+
     # Programmatic Things
     parser.add_argument("--status", dest="status", help="Print status \
                         of bids and exit", action='store_true')
-    parser.add_argument("-c", "--config", dest="config", default='config.cfg',
-                        help="Specify a config file")
     parser.add_argument("--simulate", dest="simulate", default=False,
                         action='store_true', help="Simulate bidding only")
     parser.add_argument("-d", "--debug", dest="debug", action='store_true',
                         help="Enable debug log messages")
+    parser.add_argument("-c", "--config", dest="config", default='config.cfg',
+                        help="Specify a config file")
+    parser.add_argument("-t", "--time", dest="time_interval", type=int,
+                        help="Bid checking interval in seconds \
+                        (ex: 1)")
 
     return parser.parse_args()
 
 
-def show_auction_status(campaign_url):
+def show_auction_status(config):
     """
     Print out a summary report of the current bids on jerseys
     """
 
-    bidding_url = campaign_url + "bidding.php"
-    content = urllib2.urlopen(bidding_url).read()
-    soup = BeautifulSoup(content)
-    jerseys = get_auctioned_jerseys(soup)
-    for j in jerseys:
-        print j
+    for c in config.campaigns:
+        print "[{0}]".format(c.name)
+        bidding_url = c.url + "/bidding.php"
+        content = urllib2.urlopen(bidding_url).read()
+        soup = BeautifulSoup(content)
+        jerseys = get_auctioned_jerseys(soup)
+        for j in jerseys:
+            print j
 
 
 def get_auctioned_jerseys(soup):
@@ -118,14 +103,15 @@ def get_timestamp():
     """
     Return the current time in a sane format
     """
-    return re.sub('\d{5}$', '', str(datetime.now()))
+    time = datetime.strftime(datetime.now(), '%m-%d %H:%M:%S.%f')
+    return re.sub('\d{5}$', '', time)
 
 
 def get_jersey_current_bid(campaign_url, number):
     """
     Grab the current bid on a given jersey
     """
-    bid = requests.get(campaign_url+"scripts/high_bid.php?id="
+    bid = requests.get(campaign_url+"/high_bid.php?id="
                        + str(number))
     try:
         bid_amt = float(bid.text)
@@ -147,7 +133,7 @@ def closeout(signal, frame):
     exit()
 
 
-def get_bids(bid_string):
+def get_bids_from_string(bid_string, campaign):
     """
     Get a list of bid objects from the config string
     """
@@ -166,33 +152,37 @@ def get_bids(bid_string):
         number, my_bid = bid.split(":")
         number = int(number)
         my_bid = float(my_bid)
-        bid_obj = Bid(number, 0, my_bid)
+        bid_obj = Bid(campaign, number, 0, my_bid)
         bid_objects.append(bid_obj)
 
     return bid_objects
 
 
-def refresh_bids(campaign_url, bids, max_bid):
+def refresh_bids(config):
     """
     Refresh the current amount of a list of bid objects
     """
-    updated_bids = []
-    for bid in bids:
-        current_amount = get_jersey_current_bid(campaign_url, bid.jersey)
-        bid.update_current_amount(current_amount, max_bid)
-        updated_bids.append(bid)
+    for c in config.campaigns:
+        updated_bids = []
+        for bid in c.bids:
+            current_amount = get_jersey_current_bid(c.url, bid.jersey)
+            bid.update_current_amount(current_amount, c.max_bid)
+            if bid.jersey in c.favorites:
+                bid.favorite = True
+            updated_bids.append(bid)
+        c.update_bids(updated_bids)
 
-    return updated_bids
 
-
-def show_bid_report(bids):
+def show_bid_report(config):
     """
     Print a report of the status of your bids
     """
-    for bid in bids:
-        print get_timestamp()+"\t Jersey: "+str(bid.jersey)+"\t Current Bid: "\
-            + str(bid.current_amount)+" ("+str(bid.my_amount)+")\tStatus: " \
-            + bid.status
+    for c in config.campaigns:
+        for bid in c.bids:
+            fav_bit = " "
+            if bid.favorite is True:
+                fav_bit = "*"
+            print "{0}    {1:12} #{2:3}    Current: {3} ({4})    Status: {5}".format(get_timestamp(), c.name, str(bid.jersey)+fav_bit, str(bid.current_amount), str(bid.my_amount), bid.status)
 
 
 def get_bid_from_my_bids(bids, number):
@@ -205,65 +195,52 @@ def get_bid_from_my_bids(bids, number):
     raise Exception("Unable to find a bid for "+str(number))
 
 
-def win_bid_from_pool(my_bids, config):
+def win_bid_from_pool(config):
     """
     Ensure you are winning at least one bid from a pool
     """
     bid_states = {}
+    all_bids = []
 
     # Get a list of the status's of your bids
-    for bid in my_bids:
-        bid_states[bid.status] = None
+    for c in config.campaigns:
+        for bid in c.bids:
+            bid_states[bid.status] = None
+            all_bids.append(bid)
 
     # All of your jerseys are maxed out.
     if len(bid_states.keys()) is 1 and "MAXED OUT" in bid_states.keys():
         print "All bids are maxed out. Either increase your max bid or leave"
-        return my_bids
 
     # You aren't winning anything. We should fix that.
     if "WINNING" not in bid_states.keys():
-        logging.info("You're not winning anything!")
-        losing_bids = get_bids_by_status(my_bids, "LOSING")
-        # If you have a favorite, we will default to that until it is maxed out
-        if config.favorite:
-            try:
-                active_bid = get_bid_from_my_bids(losing_bids, config.favorite)
-            except Exception:
-                # Your favorite jersey is maxed out
-                logging.warning("Favorite jersey ("+str(config.favorite) +
-                                ") is maxed out. Picking lowest remaining.")
-                active_bid = get_lowest_bid(losing_bids)
-        else:
-            # You have no favorite
-            active_bid = get_lowest_bid(losing_bids)
+        logging.warning("You're not winning anything!")
+        losing_bids = get_bids_by_status(all_bids, "LOSING")
 
+        active_bid = get_favorite_bid(config)
+        if active_bid is None:
+            logging.info("There are no favorites for you")
+            logging.debug("There are no favorite bids for you")
+            active_bid = get_lowest_bid(losing_bids)
+        
         # Update bid object after making a new bid
         logging.debug("Setting active bid to #"+str(active_bid.jersey))
         new_bid = make_bid(active_bid, config)
 
-        # Add it back into the list of your active bids
-        new_bids = []
-        for bid in my_bids:
-            if bid.jersey == new_bid.jersey:
-                new_bids.append(new_bid)
-            else:
-                new_bids.append(bid)
     else:
         # You are winning at least one! yay!
-        logging.info("You're winning at least one jersey")
-
-    return my_bids
+        logging.warning("You're winning at least one jersey")
 
 
 def print_config(config):
     """
     Print a string summarizing your bid status
     """
-    print "You are: "+config.name+" ("+config.email+")"
-    print "Your maximum bid is: "+str(config.max_bid)
-    print "You will check your bids every "+str(config.time_interval) + \
-        " seconds and re-bid at $"+str(config.bid_interval)+" intervals"
-    print ""
+    print "You are: "+config.name+" (Email:"+config.email+"/Phone:"+config.phone+")"
+    print "You will check your bids every "+str(config.time_interval) + " seconds"
+    print "You are bidding in "+str(len(config.campaigns))+" campaigns:"
+    for c in config.campaigns:
+        print "\t" + c.name + " (Max: $"+str(c.max_bid)+", Interval: $"+str(c.bid_interval)+")"
 
 
 def get_bids_by_status(bids, state):
@@ -292,9 +269,17 @@ def make_bid(bid, config):
     """
     Make a bid on a jersey
     """
+    # Figure out the campaign
+    campaign = None
+    for c in config.campaigns:
+        if c.name is bid.campaign:
+            campaign = c
+    if campaign is None:
+        raise Exception("Unable to find campaign for bid")
+
     # Calculate your next bid amount
-    bid_amount = bid.current_amount + config.bid_interval
-    if bid_amount > config.max_bid:
+    bid_amount = bid.current_amount + campaign.bid_interval
+    if bid_amount > campaign.max_bid:
         logging.warning("Updated bid is outside of your maximum")
         return bid
 
@@ -308,11 +293,11 @@ def make_bid(bid, config):
         return bid
     try:
         # POST the bid, update the object, update the config file
-        post_bid(bid.jersey, bid_amount, config)
-        bid.update_my_amount(bid_amount, config.max_bid)
+        post_bid(bid.jersey, bid_amount, config, campaign)
+        bid.update_my_amount(bid_amount, campaign.max_bid)
         update_bid_file(bid, config)
-    except Exception:
-        # Something didn't update. We'll catch it on the next run
+    except Exception as e:
+        logging.error(e)
         pass
 
     return bid
@@ -335,7 +320,7 @@ def update_bid_file(bid, config):
         fh.truncate()
 
 
-def post_bid(jersey, bid_amount, config):
+def post_bid(jersey, bid_amount, config, campaign):
     """
     Send off a bid on a specific jersey
     """
@@ -345,7 +330,7 @@ def post_bid(jersey, bid_amount, config):
                    'phone': config.phone}
 
         # The URL to POST to
-        submit_url = config.campaign_url + "scripts/jersey_submit.php"
+        submit_url = campaign.url + "/jersey_submit.php"
 
         # Make the request
         r = requests.post(submit_url, data=payload)
@@ -355,3 +340,38 @@ def post_bid(jersey, bid_amount, config):
         elif r.text.endswith("over"):
             logging.error("The auction is over. I'm sorry. We somehow lost.")
             raise Exception("Critical POST error")
+
+
+def print_favorites(config):
+    """
+    Print all of the favorite numbers for all campaigns
+    """
+    for c in config.campaigns:
+        fav_string = "None"
+        if c.favorites:
+            fav_string = '#' + ' #'.join(map(str, c.favorites))
+
+        print "Favorites for '{0}': {1}".format(c.name, fav_string)
+
+
+def get_favorite_bid(config):
+    """
+    Return the bid to use as your favorite. Goes in numberical order for each
+    campaign, then defaults to the first campaign listed
+    """
+
+    for c in config.campaigns:
+        c_fav_bid = None
+        if c.favorites:
+            for active_number in c.favorites:
+                bid = c.get_bid_by_number(active_number)
+                if bid.status is "LOSING":
+                    c_fav_bid = bid
+                    break
+
+        if c_fav_bid is None:
+            continue
+        logging.warning("Favorite is "+c.name+" #"+str(c_fav_bid.jersey))
+        return c_fav_bid
+
+    # Otherwise there are no favorites left

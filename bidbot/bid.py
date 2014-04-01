@@ -3,15 +3,18 @@ class Bid:
     This is a representation of a bid that you are making for
     a jersey
     """
-    def __init__(self, jersey, current_amount, my_amount):
+    def __init__(self, campaign, jersey, current_amount, my_amount):
+        self.campaign = campaign
         self.jersey = jersey
         self.current_amount = current_amount
         self.my_amount = my_amount
 
         self.update_current_amount(my_amount)
 
+        self.favorite = False
+
     def __repr__(self):
-        return "<Bid: {jersey="+str(self.jersey)+",current_amount=" + \
+        return "<Bid: {campaign="+self.campaign+",jersey="+str(self.jersey)+",current_amount=" + \
             str(self.current_amount)+",my_amount="+str(self.my_amount) + \
             ",status="+self.status+")}>"
 
