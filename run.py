@@ -39,7 +39,7 @@ def main():
     refresh_bids(config)
     show_bid_report(config)
     print ""
-    #cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
+    cont = raw_input("Press Enter to begin bidding or CTRL-C to exit...")
 
     # Continuously show status and update bids based on your configuration
     while True:

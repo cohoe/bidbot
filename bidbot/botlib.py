@@ -241,6 +241,7 @@ def print_config(config):
     print "You are bidding in "+str(len(config.campaigns))+" campaigns:"
     for c in config.campaigns:
         print "\t" + c.name + " (Max: $"+str(c.max_bid)+", Interval: $"+str(c.bid_interval)+")"
+    print ""
 
 
 def get_bids_by_status(bids, state):
@@ -352,6 +353,7 @@ def print_favorites(config):
             fav_string = '#' + ' #'.join(map(str, c.favorites))
 
         print "Favorites for '{0}': {1}".format(c.name, fav_string)
+    print ""
 
 
 def get_favorite_bid(config):

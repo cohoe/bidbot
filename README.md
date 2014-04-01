@@ -7,6 +7,9 @@ Automatically bid on jerseys auctioned off through the RIT bidding system
 1. Bid on a set of jerseys
 1. Bid to the max on a favorite jersey
 
+# Screenshot
+![Demo](/screenshot.png "Screenshot of current bid status")
+
 # Installation
 Just ```git clone``` and make sure you have all the dependencies.
 
@@ -29,3 +32,4 @@ This means that you want jerseys 27 and 28. You have bids of 150 and 160 respect
 1. ncurses-like screen printing for more sane viewing
 1. Live status view highlighting recent increases
 1. Historical graphs
+
