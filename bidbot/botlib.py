@@ -210,7 +210,8 @@ def win_bid_from_pool(config):
 
     # All of your jerseys are maxed out.
     if len(bid_states.keys()) is 1 and "MAXED OUT" in bid_states.keys():
-        print "All bids are maxed out. Either increase your max bid or leave"
+        logging.warning("All bids are maxed out. Either increase your max bid or leave")
+        return
 
     # You aren't winning anything. We should fix that.
     if "WINNING" not in bid_states.keys():

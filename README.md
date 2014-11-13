@@ -12,6 +12,10 @@ Automatically bid on jerseys auctioned off through the RIT bidding system
 ![Demo](/screenshot.png "Screenshot of current bid status")
 
 # Installation
+## Dependencies
+* python-requests
+* python-beautifulsoup4
+
 Just ```git clone``` and make sure you have all the dependencies.
 
 # Configuration
