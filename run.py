@@ -52,7 +52,8 @@ def main():
             #logging.error(e)
 
         print ""
-        sleep(config.time_interval)
+        sleep_time = int(config.time_interval)
+        sleep(sleep_time)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, closeout)
