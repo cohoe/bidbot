@@ -298,6 +298,7 @@ def make_bid(bid, config):
         post_bid(bid.jersey, bid_amount, config, campaign)
         bid.update_my_amount(bid_amount, campaign.max_bid)
         update_bid_file(bid, config)
+        logging.warning("Successfull bid on %s #%d" % (bid.campaign, bid.jersey))
     except Exception as e:
         logging.error(e)
         pass
