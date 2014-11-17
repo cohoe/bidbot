@@ -24,10 +24,6 @@ class Configuration:
             logging.error("Config file not found!")
             exit(1)
 
-        self.name = self.cp.get("global", "name")
-        self.email = self.cp.get("global", "email")
-        self.phone = self.cp.get("global", "phone")
-        self.time_interval = self.cp.getint("global", "time_interval")
 
         # Debug Logging
         if self.args.debug:
@@ -70,9 +66,24 @@ class Configuration:
                              favorites)
                 self.campaigns.append(c)
 
+        # Set the config object attributes for optional items
         for item in global_opt_items:
             if getattr(self.args, item) is not None:
                 setattr(self, item, getattr(self.args, item))
+
+        # Set the config object attributes for required items.
+        # Either from config file or from CLI
+        for item in global_req_items:
+            try:
+                arg_value = getattr(self.args, item)
+                if arg_value is None:
+                    raise AttributeError
+                # Do it from CLI args
+                setattr(self, item, getattr(self.args, item))
+            except AttributeError:
+                # No argument was given. Do it from file.
+                setattr(self, item, self.cp.get("global", item))
+                
 
 #        file_items = [line[0] for line in self.cp.items(bidder_head)]
 

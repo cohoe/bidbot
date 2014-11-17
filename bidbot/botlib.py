@@ -291,7 +291,7 @@ def make_bid(bid, config):
 
     # This is fake. Don't actually do anything
     if config.simulate is True:
-        logging.warning("Simulate mode is on. Not actually bidding.")
+        logging.warning("Simulate mode is on. Not actually bidding. (Would have been %s #%d)" % (bid.campaign, bid.jersey))
         return bid
     try:
         # POST the bid, update the object, update the config file
